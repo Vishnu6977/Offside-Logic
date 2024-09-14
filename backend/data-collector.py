@@ -3,20 +3,33 @@ sys.path.append(r'C:\Users\vishn\AppData\Local\Packages\PythonSoftwareFoundation
 import requests
 import pymongo
 
-def get_data(season: str):
+def get_match_ids(season: str):
     try:
         s1 = season
         s2 = str(int(season) + 1)
         url = f"https://www.fotmob.com/api/leagues?id=87&ccode3=IND&season={s1}%2F{s2}"
         response = requests.get(url).json()
         data = response["matches"]["allMatches"]
-        return data
+        ids = [match["id"] for match in data]
+        return ids
     except Exception as e:
         print(f"Error in get_data: {e}")
         return None
 
+
 def insert_data(season: str):
-    data = get_data(season)
+    ids = get_match_ids(season)
+
+    data = []
+    
+    for id in ids:
+        try:
+            url = f"https://www.fotmob.com/api/matchDetails?matchId={id}"
+            response = requests.get(url).json()
+            
+        except Exception as e:
+            print(f"Error in insert_data: {e}")
+
     if data:
         collection = db[f"season_{season}"]
         try:
@@ -33,7 +46,7 @@ def insert_data(season: str):
 client = pymongo.MongoClient("mongodb+srv://vishnuluxx:OHqGeEuCn842o31i@cluster0.cqtwr.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0",
                              tls=True,
                             tlsAllowInvalidCertificates=True)
-db = client["football_data"]
+db = client["football_data"]    
 
 # Insert season data
 season = "2023"
